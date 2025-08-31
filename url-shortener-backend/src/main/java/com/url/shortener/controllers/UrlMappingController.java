@@ -1,5 +1,6 @@
 package com.url.shortener.controllers;
 
+import com.url.shortener.dto.ClickEventDTO;
 import com.url.shortener.dto.UrlMappingDTO;
 import com.url.shortener.models.User;
 import com.url.shortener.services.UrlMappingService;
@@ -10,6 +11,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -39,5 +43,33 @@ public class UrlMappingController {
         List<UrlMappingDTO> urls = urlMappingService.getUrlsByUser(user);
 
         return ResponseEntity.ok(urls);
+    }
+
+    @GetMapping("/analytics/{shortUrl}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<ClickEventDTO>> getUrlAnalytics(@PathVariable String shortUrl,
+                                                               @RequestParam("startDate") String startDate,
+                                                               @RequestParam("endDate") String endDate) {
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+        LocalDate start = LocalDate.parse(startDate, formatter);
+        LocalDate end = LocalDate.parse(endDate, formatter);
+        List<ClickEventDTO> clickEventDTOS = urlMappingService.getClickEventByDate(shortUrl, start, end);
+
+        return ResponseEntity.ok(clickEventDTOS);
+    }
+
+    @GetMapping("/totalClicks")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<LocalDate, Long>> getTotalClicksByDate(Principal principal,
+                                                                     @RequestParam("startDate") String startDate,
+                                                                     @RequestParam("endDate") String endDate) {
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+        User user = userService.findByUsername(principal.getName());
+        LocalDate start = LocalDate.parse(startDate, formatter);
+        LocalDate end = LocalDate.parse(endDate, formatter);
+        Map<LocalDate, Long> totalClick = urlMappingService.getTotalClickByUserAndDate(user, start, end);
+
+        return ResponseEntity.ok(totalClick);
+
     }
 }
