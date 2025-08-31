@@ -10,12 +10,14 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
 public class UrlMappingServiceImpl implements UrlMappingService {
     private UrlMappingRepository urlMappingRepository;
 
+    @Override
     public UrlMappingDTO createShortUrl(String originalUrl, User user) {
         String shortUrl = generateShortUrl();
         UrlMapping urlMapping = new UrlMapping();
@@ -50,5 +52,13 @@ public class UrlMappingServiceImpl implements UrlMappingService {
             sb.append(ALPHABET.charAt(random.nextInt(ALPHABET.length())));
         }
         return sb.toString();
+    }
+
+    @Override
+    public List<UrlMappingDTO> getUrlsByUser(User user){
+
+        return urlMappingRepository.findByUser(user)
+                .stream().map(this::convertToDto)
+                .toList();
     }
 }
